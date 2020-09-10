@@ -2,9 +2,6 @@
 {% block title %}
 NEW ENTRY
 {% endblock %}
-{% block nav %}
-Create New Entry
-{% endblock %}
 {% block body %}
 <form action="{% url 'wiki:new' %}" method="post">
     {% csrf_token %}

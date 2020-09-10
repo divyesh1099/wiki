@@ -5,7 +5,7 @@ from django import forms
 from django.urls import reverse
 from django.http import HttpResponse
 from django.http import HttpResponseRedirect
-import random as rnd
+import random
 
 def index(request):
     return render(request, "encyclopedia/index.html", {
@@ -17,7 +17,7 @@ def search(request):
         title=request.POST['q']
         return render(request, "encyclopedia/title.html", {
             "title":title,
-            "description":markdown2.Markdown(util.get_entry(title))
+            "description":util.get_entry(title)
         })
     else:
         return HttpResponse("WRONG PAGE")
@@ -29,10 +29,20 @@ def new(request):
         return HttpResponseRedirect(reverse("wiki:index"))
     else:
         return render(request, "encyclopedia/new.html")
-    
 
-def random(request):
-    title=rnd.choice(((util.list_entries())))
+def edit(request, title):
+    if not request.POST:
+        return render(request, "encyclopedia/edit.html", {
+        "title":title,
+        "description":util.get_entry(title)
+        })
+    else:
+        print("NOICE")
+        util.save_entry(request.POST["q"],request.POST["description"])
+        return HttpResponseRedirect(reverse("wiki:index"))
+
+def randompage(request):
+    title=random.choice(((util.list_entries())))
     return render(request, "encyclopedia/title.html", {
         "title":title,
         "description":util.get_entry(title)
