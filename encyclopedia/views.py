@@ -1,12 +1,12 @@
 from django.shortcuts import render
-import markdown2
+from markdown2 import Markdown
 from . import util
 from django import forms
 from django.urls import reverse
-from django.http import HttpResponse
-from django.http import HttpResponseRedirect
+from django.http import HttpResponse, HttpResponseRedirect, Http404
 import random
-
+import difflib
+markdowner=Markdown()
 def index(request):
     return render(request, "encyclopedia/index.html", {
         "entries": util.list_entries()
@@ -14,14 +14,31 @@ def index(request):
 
 def search(request):
     if request.method=="POST":
+        foundentries=[]
         title=request.POST['q']
-        return render(request, "encyclopedia/title.html", {
-            "title":title,
-            "description":util.get_entry(title)
-        })
+        matchword=difflib.get_close_matches(title, util.list_entries())
+        if matchword:
+            return render(request, "encyclopedia/title.html", {
+                "title":matchword[0],
+                "description":markdowner.convert(util.get_entry(matchword[0]))
+            })
+        else:
+            for word in util.list_entries():
+                if word.startswith(title):
+                    actualword=word
+                    foundentries.append(actualword)
+                else:
+                    print("NO SUCH ENTRIES FOUND")
+            if foundentries:
+                return render(request, "encyclopedia/index.html", {
+                    "entries":foundentries
+                })
+            else:
+                return render(request, "encyclopedia/index.html", {
+                    "entries":util.list_entries()
+                })
     else:
-        return HttpResponse("WRONG PAGE")
-    
+        raise Http404    
     
 def new(request):
     if request.POST:
@@ -45,11 +62,11 @@ def randompage(request):
     title=random.choice(((util.list_entries())))
     return render(request, "encyclopedia/title.html", {
         "title":title,
-        "description":util.get_entry(title)
+        "description":markdowner.convert(util.get_entry(title))
     })
 
 def wikititle(request, title):
     return render(request, "encyclopedia/title.html", {
         "title":title,
-        "description":util.get_entry(title)
+        "description":markdowner.convert(util.get_entry(title))
     })
